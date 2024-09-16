@@ -1,0 +1,38 @@
+name: Build Nginx
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libpcre3 libpcre3-dev zlib1g zlib1g-dev libssl-dev
+
+      - name: Download Nginx source
+        run: |
+          curl -O https://nginx.org/download/nginx-1.24.0.tar.gz
+          tar -xzvf nginx-1.24.0.tar.gz
+
+      - name: Build Nginx
+        run: |
+          cd nginx-1.24.0
+          ./configure
+          make
+          sudo make install
+
+      - name: Verify installation
+        run: |
+          /usr/local/nginx/sbin/nginx -v
