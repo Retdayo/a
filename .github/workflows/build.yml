@@ -1,12 +1,11 @@
-name: Build Nginx
+name: Build and Release Nginx
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
+  tags:
+    - 'v*.*.*' # タグを使ってリリースを作成する場合
 
 jobs:
   build:
@@ -37,6 +36,25 @@ jobs:
           make
           make install
 
-      - name: Verify installation
+      - name: Archive Nginx binary
         run: |
-          /home/runner/nginx/sbin/nginx -v
+          tar -czvf nginx.tar.gz -C /home/runner nginx
+
+      - name: Upload Nginx binary as release artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: nginx-binary
+          path: nginx.tar.gz
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Upload release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: nginx.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
